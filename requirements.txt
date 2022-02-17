@@ -4,3 +4,4 @@ tensorflow-probability
 numpy
 matplotlib
 tensorflow_datasets
+scipy

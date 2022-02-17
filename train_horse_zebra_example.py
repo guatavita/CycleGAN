@@ -10,7 +10,7 @@ import os
 
 # GPU device
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "" # no GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = ""  # no GPU
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
@@ -28,6 +28,11 @@ tfds.disable_progress_bar()
 autotune = tf.data.AUTOTUNE
 
 from Network.CycleGAN import CycleGAN
+
+# Define the standard image size.
+orig_img_size = (286, 286)
+# Size of the random crops to be used during training.
+input_img_size = (256, 256, 3)
 
 # Loss function for evaluating adversarial loss
 adv_loss_fn = keras.losses.MeanSquaredError()
@@ -79,7 +84,7 @@ def normalize_img(img):
     return (img / 127.5) - 1.0
 
 
-def preprocess_train_image(img, label, orig_img_size, input_img_size):
+def preprocess_train_image(img, label):
     # Random flip
     img = tf.image.random_flip_left_right(img)
     # Resize to the original size first
@@ -91,7 +96,7 @@ def preprocess_train_image(img, label, orig_img_size, input_img_size):
     return img
 
 
-def preprocess_test_image(img, label, input_img_size):
+def preprocess_test_image(img, label):
     # Only resizing and normalization for the test images.
     img = tf.image.resize(img, [input_img_size[0], input_img_size[1]])
     img = normalize_img(img)
@@ -100,14 +105,10 @@ def preprocess_test_image(img, label, input_img_size):
 
 def main():
     # Load the horse-zebra dataset using tensorflow-datasets.
-    dataset, _ = tfds.load("cycle_gan/horse2zebra", with_info=True, as_supervised=True)
+    dataset, _ = tfds.load('cycle_gan/horse2zebra', with_info=True, as_supervised=True)
     train_horses, train_zebras = dataset["trainA"], dataset["trainB"]
     test_horses, test_zebras = dataset["testA"], dataset["testB"]
 
-    # Define the standard image size.
-    orig_img_size = (286, 286)
-    # Size of the random crops to be used during training.
-    input_img_size = (256, 256, 3)
     # Weights initializer for the layers.
     kernel_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
     # Gamma initializer for instance normalization.
@@ -118,15 +119,13 @@ def main():
 
     # Apply the preprocessing operations to the training data
     train_horses = (
-        train_horses.map(preprocess_train_image, num_parallel_calls=autotune, orig_img_size=orig_img_size,
-                         input_img_size=input_img_size)
+        train_horses.map(preprocess_train_image, num_parallel_calls=autotune)
             .cache()
             .shuffle(buffer_size)
             .batch(batch_size)
     )
     train_zebras = (
-        train_zebras.map(preprocess_train_image, num_parallel_calls=autotune, orig_img_size=orig_img_size,
-                         input_img_size=input_img_size)
+        train_zebras.map(preprocess_train_image, num_parallel_calls=autotune)
             .cache()
             .shuffle(buffer_size)
             .batch(batch_size)
@@ -134,13 +133,13 @@ def main():
 
     # Apply the preprocessing operations to the test data
     test_horses = (
-        test_horses.map(preprocess_test_image, num_parallel_calls=autotune, input_img_size=input_img_size)
+        test_horses.map(preprocess_test_image, num_parallel_calls=autotune)
             .cache()
             .shuffle(buffer_size)
             .batch(batch_size)
     )
     test_zebras = (
-        test_zebras.map(preprocess_test_image, num_parallel_calls=autotune, input_img_size=input_img_size)
+        test_zebras.map(preprocess_test_image, num_parallel_calls=autotune)
             .cache()
             .shuffle(buffer_size)
             .batch(batch_size)
