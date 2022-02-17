@@ -2,3 +2,5 @@ tensorflow
 tensorflow-addons
 tensorflow-probability
 numpy
+matplotlib
+tensorflow_datasets

@@ -137,7 +137,7 @@ def get_discriminator(input_img_size, filters=64, kernel_initializer=kernel_init
     return model
 
 
-class CycleGan(keras.Model):
+class CycleGAN(keras.Model):
     def __init__(self,
                  generator_G=get_resnet_generator(name="generator_G"),
                  generator_F=get_resnet_generator(name="generator_F"),
