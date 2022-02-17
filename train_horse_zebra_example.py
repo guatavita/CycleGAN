@@ -7,6 +7,13 @@
 # Description:
 
 import os
+
+# GPU device
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "" # no GPU
+os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
+os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -148,7 +155,7 @@ def main():
     plt.show()
 
     # Create cycle gan model
-    cycle_gan_model = CycleGAN()
+    cycle_gan_model = CycleGAN(input_img_size=input_img_size)
 
     # Compile the model
     cycle_gan_model.compile(

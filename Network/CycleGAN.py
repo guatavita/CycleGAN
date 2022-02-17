@@ -138,23 +138,23 @@ def get_discriminator(input_img_size, filters=64, kernel_initializer=kernel_init
 
 
 class CycleGAN(keras.Model):
-    def __init__(self,
-                 generator_G=get_resnet_generator(name="generator_G"),
-                 generator_F=get_resnet_generator(name="generator_F"),
-                 discriminator_X=get_discriminator(name="discriminator_X"),
-                 discriminator_Y=get_discriminator(name="discriminator_Y"),
+    def __init__(self, input_img_size=(256, 256, 3),
+                 generator_G=None,
+                 generator_F=None,
+                 discriminator_X=None,
+                 discriminator_Y=None,
                  lambda_cycle=10.0,
                  lambda_identity=0.5):
-        super(CycleGan, self).__init__()
-        self.gen_G = generator_G
-        self.gen_F = generator_F
-        self.disc_X = discriminator_X
-        self.disc_Y = discriminator_Y
+        super(CycleGAN, self).__init__()
+        self.gen_G = get_resnet_generator(input_img_size, name="generator_G") if generator_G is None else generator_G
+        self.gen_F = get_resnet_generator(input_img_size, name="generator_F") if generator_F is None else generator_F
+        self.disc_X = get_discriminator(input_img_size, name="discriminator_X") if discriminator_X is None else discriminator_X
+        self.disc_Y = get_discriminator(input_img_size, name="discriminator_Y") if discriminator_Y is None else discriminator_Y
         self.lambda_cycle = lambda_cycle
         self.lambda_identity = lambda_identity
 
     def compile(self, gen_G_optimizer, gen_F_optimizer, disc_X_optimizer, disc_Y_optimizer, gen_loss_fn, disc_loss_fn):
-        super(CycleGan, self).compile()
+        super(CycleGAN, self).compile()
         self.gen_G_optimizer = gen_G_optimizer
         self.gen_F_optimizer = gen_F_optimizer
         self.disc_X_optimizer = disc_X_optimizer
