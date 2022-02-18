@@ -34,15 +34,13 @@ parser.add_argument("--tb_path", default=r'C:\Data\DELPEL\results\Tensorboard_cG
 parser.add_argument("--base_path", default=r'C:\Data\DELPEL\results\img_label_data\CBCT\unpaired_tfrecords', type=str,
                     help="tfrecord base folder for train/validation folders")
 parser.add_argument("--model_desc", default="CycleGAN", type=str, help="model name")
-parser.add_argument("--loss_func1", default='mse', choices=['cc', 'mse'], type=str, help="loss function")
-parser.add_argument("--loss_func2", default='mse', choices=['cc', 'mse'], type=str, help="loss function")
 parser.add_argument("--optimizer", default="adam", choices=['adam', 'sgd', 'sgdn', 'both'], type=str,
                     help="optimizer function")
 parser.add_argument("--normalization", default="instance", choices=["batch", "group", "instance"], type=str,
                     help="normalization function")
 parser.add_argument("--epoch", default=200, type=int, help="max number of epochs")
 parser.add_argument("--batch_size", default=1, type=int, help="batch size for training")
-parser.add_argument("--lr", default=0.0001, type=float, help="stable learning rate")
+parser.add_argument("--lr", default=0.0002, type=float, help="stable learning rate")
 parser.add_argument("--per_img_std", default=True, type=str2bool, help="bool to run per image centered normalization")
 parser.add_argument("--max_noise", default=0.0, type=float, help="gaussian noise augmentation")
 parser.add_argument("--scale_aug", default=1.0, type=float, help="scale value to run scaling augmentation")
@@ -141,8 +139,6 @@ def main():
     batch_size = args.batch_size
     lr = args.lr
     epoch = args.epoch
-    loss_function1 = args.loss_func1
-    loss_function2 = args.loss_func2
     optimizer = args.optimizer
     normalization = args.normalization
     per_img_std = args.per_img_std
@@ -190,19 +186,83 @@ def main():
                                                             **image_generator_args), \
                                            return_generator(is_validation=False, batch_size=batch_size,
                                                             **annotation_generator_args)
-    # validation_generator_X, validation_generator_Y = return_generator(is_validation=True, batch_size=1,
-    #                                                                   **image_generator_args), \
-    #                                                  return_generator(is_validation=True, batch_size=1,
-    #                                                                   **annotation_generator_args)
+    validation_generator_X, validation_generator_Y = return_generator(is_validation=True, batch_size=1,
+                                                                      **image_generator_args), \
+                                                     return_generator(is_validation=True, batch_size=1,
+                                                                      **annotation_generator_args)
 
-    train_gen_x = train_generator_X.data_set.as_numpy_iterator()
-    x = next(train_gen_x)
+    # train_gen_x = train_generator_X.data_set.as_numpy_iterator()
+    # x = next(train_gen_x)
+    # train_gen_y = train_generator_Y.data_set.as_numpy_iterator()
+    # y = next(train_gen_y)
+    # train_generators = tf.data.Dataset.zip((train_generator_X.data_set, train_generator_Y.data_set)).as_numpy_iterator()
+    # x, y = next(train_generators)
+    # plot_scroll_Image(x[0][...,0])
+    # plot_scroll_Image(y[0][...,0])
 
-    train_gen_y = train_generator_Y.data_set.as_numpy_iterator()
-    y = next(train_gen_y)
+    sys.exit()
 
-    plot_scroll_Image(x[0][:,:,:,0])
+    # Loss function for evaluating adversarial loss
+    adv_loss_fn = tf.keras.losses.MeanSquaredError()
 
+    # Define the loss function for the generators
+    def generator_loss_fn(fake):
+        fake_loss = adv_loss_fn(tf.ones_like(fake), fake)
+        return fake_loss
+
+    # Define the loss function for the discriminators
+    def discriminator_loss_fn(real, fake):
+        real_loss = adv_loss_fn(tf.ones_like(real), real)
+        fake_loss = adv_loss_fn(tf.zeros_like(fake), fake)
+        return (real_loss + fake_loss) * 0.5
+
+    # Create cycle gan model
+    cycle_gan_model = CycleGAN(input_shape=(512, 512, 1))
+
+    # Compile the model
+    cycle_gan_model.compile(
+        gen_G_optimizer=tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.5),
+        gen_F_optimizer=tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.5),
+        disc_X_optimizer=tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.5),
+        disc_Y_optimizer=tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.5),
+        gen_loss_fn=generator_loss_fn,
+        disc_loss_fn=discriminator_loss_fn,
+    )
+
+    # callbacks
+    tensorboard_output = os.path.join(tensorboard_path, 'Trial_ID_{}'.format(trial_id))
+    if not os.path.exists(tensorboard_output):
+        os.makedirs(tensorboard_output)
+
+    tensorboard = TensorBoard(log_dir=tensorboard_output, write_graph=False, write_grads=False, write_images=False,
+                              update_freq='epoch', histogram_freq=5, profile_batch=0)
+
+    checkpoint_path = os.path.join(tensorboard_path, 'Trial_ID_{}'.format(trial_id), model_desc + '.hdf5')
+
+    checkpoint = ModelCheckpoint(checkpoint_path, save_weights_only=True, save_freq='epoch', save_best_only=True,
+                                 monitor='val_sparse_categorical_mean_dsc', mode='max', verbose=1)
+
+    # tensorboard_imglr = Add_Images_and_LR(log_dir=tensorboard_output, validation_data=validation_generator.data_set,
+    #                                       number_of_images=5, target_image_height=img_size, target_image_width=img_size,
+    #                                       image_frequency=5)
+
+    callbacks = [checkpoint, tensorboard]
+
+    if hparams is not None:
+        hp_callback = Callback(tensorboard_output, hparams=hparams, trial_id='Trial_ID:{}'.format(trial_id))
+        callbacks += [hp_callback]
+
+    print('Model created at: ' + os.path.abspath(tensorboard_output))
+    print("-------------- Running model")
+    print("Number of training steps: {}, {}".format(len(train_generator_X), len(train_generator_Y)))
+    print("Number of validation steps: {}, {}".format(len(validation_generator_X), len(validation_generator_Y)))
+    print('This is the number of trainable weights:', len(cycle_gan_model.trainable_weights))
+
+    cycle_gan_model.fit(tf.data.Dataset.zip((train_generator_X.data_set, train_generator_Y.data_set)), epochs=epoch,
+              steps_per_epoch=min(len(train_generator_X), len(train_generator_Y)),
+              validation_data=tf.data.Dataset.zip((validation_generator_X.data_set, validation_generator_Y.data_set)),
+              validation_steps=min(len(validation_generator_X), len(validation_generator_Y)),
+              callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1, max_queue_size=10)
 
 if __name__ == '__main__':
     main()

@@ -108,11 +108,6 @@ def main():
     train_horses, train_zebras = dataset["trainA"], dataset["trainB"]
     test_horses, test_zebras = dataset["testA"], dataset["testB"]
 
-    # Weights initializer for the layers.
-    kernel_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
-    # Gamma initializer for instance normalization.
-    gamma_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
-
     buffer_size = 256
     batch_size = 1
 
