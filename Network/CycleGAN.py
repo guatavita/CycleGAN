@@ -147,8 +147,10 @@ class CycleGAN(keras.Model):
         super(CycleGAN, self).__init__()
         self.gen_G = get_resnet_generator(input_shape, name="generator_G") if generator_G is None else generator_G
         self.gen_F = get_resnet_generator(input_shape, name="generator_F") if generator_F is None else generator_F
-        self.disc_X = get_discriminator(input_shape, name="discriminator_X") if discriminator_X is None else discriminator_X
-        self.disc_Y = get_discriminator(input_shape, name="discriminator_Y") if discriminator_Y is None else discriminator_Y
+        self.disc_X = get_discriminator(input_shape,
+                                        name="discriminator_X") if discriminator_X is None else discriminator_X
+        self.disc_Y = get_discriminator(input_shape,
+                                        name="discriminator_Y") if discriminator_Y is None else discriminator_Y
         self.lambda_cycle = lambda_cycle
         self.lambda_identity = lambda_identity
         # self.build((None,) + input_shape)
@@ -170,8 +172,61 @@ class CycleGAN(keras.Model):
         self.cycle_loss_fn = keras.losses.MeanAbsoluteError()
         self.identity_loss_fn = keras.losses.MeanAbsoluteError()
 
-    def train_step(self, batch_data):
+    def run_cycle(self, real_x, real_y, training=False):
+        # X to fake Y
+        fake_y = self.gen_G(real_x, training=False)
+        # Y to fake X -> y2x
+        fake_x = self.gen_F(real_y, training=False)
 
+        # Cycle (X to fake Y to fake X): x -> y -> x
+        cycled_x = self.gen_F(fake_y, training=False)
+        # Cycle (Y to fake X to fake Y) y -> x -> y
+        cycled_y = self.gen_G(fake_x, training=False)
+
+        # Identity mapping
+        same_x = self.gen_F(real_x, training=False)
+        same_y = self.gen_G(real_y, training=False)
+
+        # Discriminator output
+        disc_real_x = self.disc_X(real_x, training=False)
+        disc_fake_x = self.disc_X(fake_x, training=False)
+
+        disc_real_y = self.disc_Y(real_y, training=False)
+        disc_fake_y = self.disc_Y(fake_y, training=False)
+
+        # Generator adverserial loss
+        gen_G_loss = self.generator_loss_fn(disc_fake_y)
+        gen_F_loss = self.generator_loss_fn(disc_fake_x)
+
+        # Generator cycle loss
+        cycle_loss_G = self.cycle_loss_fn(real_y, cycled_y) * self.lambda_cycle
+        cycle_loss_F = self.cycle_loss_fn(real_x, cycled_x) * self.lambda_cycle
+
+        # Generator identity loss
+        id_loss_G = (self.identity_loss_fn(real_y, same_y) * self.lambda_cycle * self.lambda_identity)
+        id_loss_F = (self.identity_loss_fn(real_x, same_x) * self.lambda_cycle * self.lambda_identity)
+
+        # Total generator loss
+        total_loss_G = gen_G_loss + cycle_loss_G + id_loss_G
+        total_loss_F = gen_F_loss + cycle_loss_F + id_loss_F
+
+        # Discriminator loss
+        disc_X_loss = self.discriminator_loss_fn(disc_real_x, disc_fake_x)
+        disc_Y_loss = self.discriminator_loss_fn(disc_real_y, disc_fake_y)
+
+        return total_loss_G, total_loss_F, disc_X_loss, disc_Y_loss
+
+    def test_step(self, batch_data):
+        real_x, real_y = batch_data
+        total_loss_G, total_loss_F, disc_X_loss, disc_Y_loss = self.run_cycle(real_x, real_y, training=False)
+        return {
+            "G_loss": total_loss_G,
+            "F_loss": total_loss_F,
+            "D_X_loss": disc_X_loss,
+            "D_Y_loss": disc_Y_loss,
+        }
+
+    def train_step(self, batch_data):
         real_x, real_y = batch_data
 
         # For CycleGAN, we need to calculate different
@@ -190,46 +245,7 @@ class CycleGAN(keras.Model):
         # 9. Return the losses in a dictionary
 
         with tf.GradientTape(persistent=True) as tape:
-            # X to fake Y
-            fake_y = self.gen_G(real_x, training=True)
-            # Y to fake X -> y2x
-            fake_x = self.gen_F(real_y, training=True)
-
-            # Cycle (X to fake Y to fake X): x -> y -> x
-            cycled_x = self.gen_F(fake_y, training=True)
-            # Cycle (Y to fake X to fake Y) y -> x -> y
-            cycled_y = self.gen_G(fake_x, training=True)
-
-            # Identity mapping
-            same_x = self.gen_F(real_x, training=True)
-            same_y = self.gen_G(real_y, training=True)
-
-            # Discriminator output
-            disc_real_x = self.disc_X(real_x, training=True)
-            disc_fake_x = self.disc_X(fake_x, training=True)
-
-            disc_real_y = self.disc_Y(real_y, training=True)
-            disc_fake_y = self.disc_Y(fake_y, training=True)
-
-            # Generator adverserial loss
-            gen_G_loss = self.generator_loss_fn(disc_fake_y)
-            gen_F_loss = self.generator_loss_fn(disc_fake_x)
-
-            # Generator cycle loss
-            cycle_loss_G = self.cycle_loss_fn(real_y, cycled_y) * self.lambda_cycle
-            cycle_loss_F = self.cycle_loss_fn(real_x, cycled_x) * self.lambda_cycle
-
-            # Generator identity loss
-            id_loss_G = (self.identity_loss_fn(real_y, same_y) * self.lambda_cycle * self.lambda_identity)
-            id_loss_F = (self.identity_loss_fn(real_x, same_x) * self.lambda_cycle * self.lambda_identity)
-
-            # Total generator loss
-            total_loss_G = gen_G_loss + cycle_loss_G + id_loss_G
-            total_loss_F = gen_F_loss + cycle_loss_F + id_loss_F
-
-            # Discriminator loss
-            disc_X_loss = self.discriminator_loss_fn(disc_real_x, disc_fake_x)
-            disc_Y_loss = self.discriminator_loss_fn(disc_real_y, disc_fake_y)
+            total_loss_G, total_loss_F, disc_X_loss, disc_Y_loss = self.run_cycle(real_x, real_y, training=True)
 
         # Get the gradients for the generators
         grads_G = tape.gradient(total_loss_G, self.gen_G.trainable_variables)

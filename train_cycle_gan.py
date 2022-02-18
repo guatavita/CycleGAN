@@ -38,7 +38,7 @@ parser.add_argument("--optimizer", default="adam", choices=['adam', 'sgd', 'sgdn
                     help="optimizer function")
 parser.add_argument("--normalization", default="instance", choices=["batch", "group", "instance"], type=str,
                     help="normalization function")
-parser.add_argument("--epoch", default=200, type=int, help="max number of epochs")
+parser.add_argument("--epoch", default=5, type=int, help="max number of epochs")
 parser.add_argument("--batch_size", default=1, type=int, help="batch size for training")
 parser.add_argument("--lr", default=0.0002, type=float, help="stable learning rate")
 parser.add_argument("--per_img_std", default=True, type=str2bool, help="bool to run per image centered normalization")
@@ -238,7 +238,7 @@ def main():
     checkpoint_path = os.path.join(tensorboard_path, 'Trial_ID_{}'.format(trial_id), model_desc + '.hdf5')
 
     checkpoint = ModelCheckpoint(checkpoint_path, save_weights_only=True, save_freq='epoch', save_best_only=True,
-                                 monitor='val_sparse_categorical_mean_dsc', mode='max', verbose=1)
+                                 verbose=1)
 
     # tensorboard_imglr = Add_Images_and_LR(log_dir=tensorboard_output, validation_data=validation_generator.data_set,
     #                                       number_of_images=5, target_image_height=img_size, target_image_width=img_size,
@@ -262,10 +262,11 @@ def main():
     #           validation_steps=min(len(validation_generator_X), len(validation_generator_Y)),
     #           callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1, max_queue_size=10)
     cycle_gan_model.fit(tf.data.Dataset.zip((train_generator_X.data_set, train_generator_Y.data_set)), epochs=epoch,
-              steps_per_epoch=1,
-              validation_data=tf.data.Dataset.zip((validation_generator_X.data_set, validation_generator_Y.data_set)),
-              validation_steps=1,
-              callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1, max_queue_size=10)
+                        steps_per_epoch=1,
+                        validation_data=tf.data.Dataset.zip((validation_generator_X.data_set, validation_generator_Y.data_set)),
+                        validation_steps=1,
+                        callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1,
+                        max_queue_size=10)
 
 if __name__ == '__main__':
     main()
