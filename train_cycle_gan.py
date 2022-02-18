@@ -200,8 +200,6 @@ def main():
     # plot_scroll_Image(x[0][...,0])
     # plot_scroll_Image(y[0][...,0])
 
-    sys.exit()
-
     # Loss function for evaluating adversarial loss
     adv_loss_fn = tf.keras.losses.MeanSquaredError()
 
@@ -258,10 +256,15 @@ def main():
     print("Number of validation steps: {}, {}".format(len(validation_generator_X), len(validation_generator_Y)))
     print('This is the number of trainable weights:', len(cycle_gan_model.trainable_weights))
 
+    # cycle_gan_model.fit(tf.data.Dataset.zip((train_generator_X.data_set, train_generator_Y.data_set)), epochs=epoch,
+    #           steps_per_epoch=min(len(train_generator_X), len(train_generator_Y)),
+    #           validation_data=tf.data.Dataset.zip((validation_generator_X.data_set, validation_generator_Y.data_set)),
+    #           validation_steps=min(len(validation_generator_X), len(validation_generator_Y)),
+    #           callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1, max_queue_size=10)
     cycle_gan_model.fit(tf.data.Dataset.zip((train_generator_X.data_set, train_generator_Y.data_set)), epochs=epoch,
-              steps_per_epoch=min(len(train_generator_X), len(train_generator_Y)),
+              steps_per_epoch=1,
               validation_data=tf.data.Dataset.zip((validation_generator_X.data_set, validation_generator_Y.data_set)),
-              validation_steps=min(len(validation_generator_X), len(validation_generator_Y)),
+              validation_steps=1,
               callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1, max_queue_size=10)
 
 if __name__ == '__main__':
