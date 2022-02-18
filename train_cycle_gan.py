@@ -83,9 +83,9 @@ from Base_Deeplearning_Code.Finding_Optimization_Parameters.Hyper_Parameter_Func
     return_hparams
 from PlotScrollNumpyArrays.Plot_Scroll_Images import plot_scroll_Image
 
-# network
 from Network.CycleGAN import CycleGAN
 from return_generator import *
+from Callback.cycle_images_callback import Add_Cycle_Images
 
 
 def create_hparams_data(model_desc, tensorboard_path, batch_size, lr, epoch, loss_function, optimizer, normalization,
@@ -215,7 +215,7 @@ def main():
         return (real_loss + fake_loss) * 0.5
 
     # Create cycle gan model
-    cycle_gan_model = CycleGAN(input_shape=(512, 512, 1))
+    cycle_gan_model = CycleGAN(input_shape=(img_size, img_size, 1))
 
     # Compile the model
     cycle_gan_model.compile(
@@ -237,14 +237,15 @@ def main():
 
     checkpoint_path = os.path.join(tensorboard_path, 'Trial_ID_{}'.format(trial_id), model_desc + '.hdf5')
 
-    checkpoint = ModelCheckpoint(checkpoint_path, save_weights_only=True, save_freq='epoch', save_best_only=True,
-                                 verbose=1)
+    checkpoint = ModelCheckpoint(checkpoint_path, save_weights_only=True, save_freq='epoch', verbose=1)
 
-    # tensorboard_imglr = Add_Images_and_LR(log_dir=tensorboard_output, validation_data=validation_generator.data_set,
-    #                                       number_of_images=5, target_image_height=img_size, target_image_width=img_size,
-    #                                       image_frequency=5)
+    tensorboard_img = Add_Cycle_Images(tensorboard_output,
+                                       validation_data=tf.data.Dataset.zip((validation_generator_X.data_set,
+                                                                            validation_generator_Y.data_set)),
+                                       number_of_images=5, image_rows=img_size//2, image_cols=img_size//2,
+                                       frequency=1)
 
-    callbacks = [checkpoint, tensorboard]
+    callbacks = [checkpoint, tensorboard, tensorboard_img]
 
     if hparams is not None:
         hp_callback = Callback(tensorboard_output, hparams=hparams, trial_id='Trial_ID:{}'.format(trial_id))
@@ -263,10 +264,12 @@ def main():
     #           callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1, max_queue_size=10)
     cycle_gan_model.fit(tf.data.Dataset.zip((train_generator_X.data_set, train_generator_Y.data_set)), epochs=epoch,
                         steps_per_epoch=1,
-                        validation_data=tf.data.Dataset.zip((validation_generator_X.data_set, validation_generator_Y.data_set)),
+                        validation_data=tf.data.Dataset.zip(
+                            (validation_generator_X.data_set, validation_generator_Y.data_set)),
                         validation_steps=1,
                         callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1,
                         max_queue_size=10)
+
 
 if __name__ == '__main__':
     main()
