@@ -7,3 +7,6 @@ tensorflow_datasets
 scipy
 pandas
 PlotScrollNumpyArrays
+scikit-image
+opencv-python
+NiftiResampler

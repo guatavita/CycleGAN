@@ -31,7 +31,7 @@ def str2bool(v):
 parser = argparse.ArgumentParser(description="Run training")
 parser.add_argument("--tb_path", default=r'C:\Data\DELPEL\results\Tensorboard_cGAN', type=str,
                     help="tensorboard folder")
-parser.add_argument("--base_path", default=r'C:\Data\DELPEL\results\img_label_data\CBCT\tfrecords', type=str,
+parser.add_argument("--base_path", default=r'C:\Data\DELPEL\results\img_label_data\CBCT\unpaired_tfrecords', type=str,
                     help="tfrecord base folder for train/validation folders")
 parser.add_argument("--model_desc", default="CycleGAN", type=str, help="model name")
 parser.add_argument("--loss_func1", default='mse', choices=['cc', 'mse'], type=str, help="loss function")
@@ -40,6 +40,7 @@ parser.add_argument("--optimizer", default="adam", choices=['adam', 'sgd', 'sgdn
                     help="optimizer function")
 parser.add_argument("--normalization", default="instance", choices=["batch", "group", "instance"], type=str,
                     help="normalization function")
+parser.add_argument("--epoch", default=200, type=int, help="max number of epochs")
 parser.add_argument("--batch_size", default=1, type=int, help="batch size for training")
 parser.add_argument("--lr", default=0.0001, type=float, help="stable learning rate")
 parser.add_argument("--per_img_std", default=True, type=str2bool, help="bool to run per image centered normalization")
@@ -82,6 +83,7 @@ import tensorflow_addons as tfa
 from Base_Deeplearning_Code.Data_Generators.Image_Processors_Module.src.Processors.TFDataSetProcessors import *
 from Base_Deeplearning_Code.Finding_Optimization_Parameters.Hyper_Parameter_Functions import determine_if_in_excel, \
     return_hparams
+from PlotScrollNumpyArrays.Plot_Scroll_Images import plot_scroll_Image
 
 # network
 from Network.CycleGAN import CycleGAN
@@ -139,7 +141,8 @@ def main():
     batch_size = args.batch_size
     lr = args.lr
     epoch = args.epoch
-    loss_function = args.loss_func
+    loss_function1 = args.loss_func1
+    loss_function2 = args.loss_func2
     optimizer = args.optimizer
     normalization = args.normalization
     per_img_std = args.per_img_std
@@ -160,29 +163,45 @@ def main():
     #                                         ud_flip_aug, rotation_angle_aug, img_size, translation_aug, per_img_std,
     #                                         contrast_aug, iteration)
 
+    debug = True
+    if debug:
+        prep_tfrecord_cache = False
+        shuffle = False
+    else:
+        prep_tfrecord_cache = True
+        shuffle = True
+
     image_generator_args = {'base_path': base_path, 'image_keys': ('image',), 'interp_keys': ('bilinear',),
                             'filling_keys': ('constant',), 'dtype_keys': ('float16',), 'model_desc': model_desc,
-                            'debug': False, 'max_noise': max_noise, 'scale_aug': scale_aug, 'crop_aug': crop_aug,
+                            'debug': debug, 'max_noise': max_noise, 'scale_aug': scale_aug, 'crop_aug': crop_aug,
                             'lr_flip_aug': lr_flip_aug, 'ud_flip_aug': ud_flip_aug,
                             'rotation_angle_aug': rotation_angle_aug, 'translation_aug': translation_aug,
-                            'per_img_std': per_img_std, 'contrast_aug': contrast_aug, 'shuffle': True,
-                            'prep_tfrecord_cache': True, 'ct_clip': True}
+                            'per_img_std': per_img_std, 'contrast_aug': contrast_aug, 'shuffle': shuffle,
+                            'prep_tfrecord_cache': prep_tfrecord_cache, 'ct_clip': True}
     annotation_generator_args = {'base_path': base_path, 'image_keys': ('annotation',), 'interp_keys': ('nearest',),
                                  'filling_keys': ('constant',), 'dtype_keys': ('float16',), 'model_desc': model_desc,
-                                 'debug': False, 'max_noise': 0.0, 'scale_aug': scale_aug, 'crop_aug': crop_aug,
+                                 'debug': debug, 'max_noise': 0.0, 'scale_aug': scale_aug, 'crop_aug': crop_aug,
                                  'lr_flip_aug': lr_flip_aug, 'ud_flip_aug': ud_flip_aug,
                                  'rotation_angle_aug': rotation_angle_aug, 'translation_aug': translation_aug,
-                                 'per_img_std': False, 'contrast_aug': contrast_aug, 'shuffle': True,
-                                 'prep_tfrecord_cache': True, 'ct_clip': False}
+                                 'per_img_std': False, 'contrast_aug': contrast_aug, 'shuffle': shuffle,
+                                 'prep_tfrecord_cache': prep_tfrecord_cache, 'ct_clip': False}
 
     train_generator_X, train_generator_Y = return_generator(is_validation=False, batch_size=batch_size,
                                                             **image_generator_args), \
                                            return_generator(is_validation=False, batch_size=batch_size,
                                                             **annotation_generator_args)
-    validation_generator_X, validation_generator_Y = return_generator(is_validation=True, batch_size=1,
-                                                                      **image_generator_args), \
-                                                     return_generator(is_validation=True, batch_size=1,
-                                                                      **annotation_generator_args)
+    # validation_generator_X, validation_generator_Y = return_generator(is_validation=True, batch_size=1,
+    #                                                                   **image_generator_args), \
+    #                                                  return_generator(is_validation=True, batch_size=1,
+    #                                                                   **annotation_generator_args)
+
+    train_gen_x = train_generator_X.data_set.as_numpy_iterator()
+    x = next(train_gen_x)
+
+    train_gen_y = train_generator_Y.data_set.as_numpy_iterator()
+    y = next(train_gen_y)
+
+    plot_scroll_Image(x[0][:,:,:,0])
 
 
 if __name__ == '__main__':
