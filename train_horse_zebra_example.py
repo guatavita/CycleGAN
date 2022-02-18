@@ -24,7 +24,6 @@ from tensorflow.keras import layers
 import tensorflow_addons as tfa
 import tensorflow_datasets as tfds
 
-tfds.disable_progress_bar()
 autotune = tf.data.AUTOTUNE
 
 from Network.CycleGAN import CycleGAN
@@ -73,7 +72,7 @@ class GANMonitor(keras.callbacks.Callback):
             ax[i, 1].axis("off")
 
             prediction = keras.preprocessing.image.array_to_img(prediction)
-            prediction.save("generated_img_{i}_{epoch}.png".format(i=i, epoch=epoch + 1))
+            prediction.save(r"C:\Bastien\Python\CycleGAN\output\generated_img_{i}_{epoch}.png".format(i=i, epoch=epoch + 1))
         plt.show()
         plt.close()
 
@@ -145,16 +144,16 @@ def main():
             .batch(batch_size)
     )
 
-    _, ax = plt.subplots(4, 2, figsize=(10, 15))
-    for i, samples in enumerate(zip(train_horses.take(4), train_zebras.take(4))):
-        horse = (((samples[0][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
-        zebra = (((samples[1][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
-        ax[i, 0].imshow(horse)
-        ax[i, 1].imshow(zebra)
-    plt.show()
+    # _, ax = plt.subplots(4, 2, figsize=(10, 15))
+    # for i, samples in enumerate(zip(train_horses.take(4), train_zebras.take(4))):
+    #     horse = (((samples[0][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
+    #     zebra = (((samples[1][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
+    #     ax[i, 0].imshow(horse)
+    #     ax[i, 1].imshow(zebra)
+    # plt.show()
 
     # Create cycle gan model
-    cycle_gan_model = CycleGAN(input_img_size=input_img_size)
+    cycle_gan_model = CycleGAN(input_shape=input_img_size)
 
     # Compile the model
     cycle_gan_model.compile(
@@ -165,15 +164,22 @@ def main():
         gen_loss_fn=generator_loss_fn,
         disc_loss_fn=discriminator_loss_fn,
     )
+
+    # cycle_gan_model.summary()
+
+    # Define output shape for Model.save()
+    # cycle_gan_model.compute_output_shape(input_shape=(None,)+input_img_size)
+    # cycle_gan_model.save(r"C:\Bastien\Python\CycleGAN\output\cyclegan_test.hdf5")
+
     # Callbacks
     plotter = GANMonitor(test_dataset=test_horses)
-    checkpoint_filepath = "./model_checkpoints/cyclegan_checkpoints.{epoch:03d}"
-    model_checkpoint_callback = keras.callbacks.ModelCheckpoint(filepath=checkpoint_filepath)
+    checkpoint_filepath = r"C:\Bastien\Python\CycleGAN\output\cyclegan_checkpoints.{epoch:03d}"
+    model_checkpoint_callback = keras.callbacks.ModelCheckpoint(filepath=checkpoint_filepath, save_weights_only=True)
 
     # Here we will train the model for just one epoch as each epoch takes around
     # 7 minutes on a single P100 backed machine.
-    cycle_gan_model.fit(tf.data.Dataset.zip((train_horses, train_zebras)), epochs=1,
-                        callbacks=[plotter, model_checkpoint_callback], verbose=2)
+    cycle_gan_model.fit(tf.data.Dataset.zip((train_horses, train_zebras)), epochs=10, steps_per_epoch=1,
+                        validation_steps=1, callbacks=[plotter, model_checkpoint_callback])
 
 
 if __name__ == '__main__':
