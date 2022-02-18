@@ -15,6 +15,7 @@ from Base_Deeplearning_Code.Data_Generators.Image_Processors_Module.src.Processo
 # data augmentation and image processor
 from Image_Processors_Utils.Image_Processor_Utils import *
 
+
 class Return_Data(ImageProcessor):
     def __init__(self, image_keys=('image',)):
         self.image_keys = image_keys
@@ -28,6 +29,7 @@ class Return_Data(ImageProcessor):
                 print('WARNING\n\n\n{} not in image_features\n\n\n'.format(key))
         del image_features
         return tuple(inputs)
+
 
 def return_generator(base_path, image_keys=('image', 'annotation'), interp_keys=('bilinear', 'nearest'),
                      filling_keys=('constant', 'constant'), dtype_keys=('float16', 'float16'), is_validation=False,
@@ -116,12 +118,12 @@ def return_generator(base_path, image_keys=('image', 'annotation'), interp_keys=
             processors += [{'shuffle': len(generator)}]
         processors += [{'cache': os.path.join(base_path, 'tf_cache', model_desc, 'train', image_keys[0])}]
         if shuffle:
-            processors += [{'shuffle': int(len(generator)/32)}]
+            processors += [{'shuffle': len(generator) // 32}]
     else:
         processors += [Cast_Data(keys=image_keys, dtypes=dtype_keys),
                        {'cache': os.path.join(base_path, 'tf_cache', model_desc, 'validation', image_keys[0])}]
-        # if shuffle:
-        #     processors += [{'shuffle': len(generator) // batch_size}]
+        if shuffle:
+            processors += [{'shuffle': len(generator) // 32}]
 
     processors += augmentation
     processors += [
