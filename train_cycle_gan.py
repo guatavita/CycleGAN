@@ -159,7 +159,7 @@ def main():
     #                                         ud_flip_aug, rotation_angle_aug, img_size, translation_aug, per_img_std,
     #                                         contrast_aug, iteration)
 
-    debug = True
+    debug = False
     if debug:
         prep_tfrecord_cache = False
         shuffle = False
