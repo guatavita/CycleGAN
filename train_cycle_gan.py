@@ -128,6 +128,15 @@ def create_hparams_data(model_desc, tensorboard_path, batch_size, lr, epoch, los
     return hparams, trial_id
 
 
+# TODO (cf https://www.kaggle.com/dimitreoliveira/improving-cyclegan-monet-paintings/notebook)
+# Transformer with residual blocks [++]
+# Residual connections between Generator and Discriminator [++]
+# Not using InstanceNorm at the first layer of both generator and discriminator [++]
+# Better InstanceNorm layer initialization [++]
+# Residual connection with Concatenate instead of Add [+]
+# Data augmentations (flips, rotations, and crops) [+]
+# Discriminator with label smoothing [+]
+
 def main():
     print("List of arguments:")
     for arg in vars(args):
