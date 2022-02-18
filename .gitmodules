@@ -1,0 +1,6 @@
+[submodule "Base_Deeplearning_Code"]
+	path = Base_Deeplearning_Code
+	url = https://github.com/guatavita/Base_Deeplearning_Code.git
+[submodule "Image_Processors_Utils"]
+	path = Image_Processors_Utils
+	url = https://github.com/guatavita/Image_Processors_Utils.git

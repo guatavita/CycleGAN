@@ -5,3 +5,5 @@ numpy
 matplotlib
 tensorflow_datasets
 scipy
+pandas
+PlotScrollNumpyArrays
