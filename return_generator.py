@@ -118,12 +118,12 @@ def return_generator(base_path, image_keys=('image', 'annotation'), interp_keys=
             processors += [{'shuffle': len(generator)}]
         processors += [{'cache': os.path.join(base_path, 'tf_cache', model_desc, 'train', image_keys[0])}]
         if shuffle:
-            processors += [{'shuffle': len(generator) // 32}]
+            processors += [{'shuffle': int(0.33*len(generator))}]
     else:
         processors += [Cast_Data(keys=image_keys, dtypes=dtype_keys),
                        {'cache': os.path.join(base_path, 'tf_cache', model_desc, 'validation', image_keys[0])}]
         if shuffle:
-            processors += [{'shuffle': len(generator) // 32}]
+            processors += [{'shuffle': int(0.33*len(generator))}]
 
     processors += augmentation
     processors += [
