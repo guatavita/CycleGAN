@@ -31,7 +31,7 @@ def str2bool(v):
 parser = argparse.ArgumentParser(description="Run training")
 parser.add_argument("--tb_path", default=r'/export/home/users/brigaud/Tensorboard/Tensorboard_cGAN', type=str,
                     help="tensorboard folder")
-parser.add_argument("--base_path", default=r'/export/home/users/brigaud/unpaired_tfrecords', type=str,
+parser.add_argument("--base_path", default=r'/export/home/users/brigaud/Data/unpaired_tfrecords', type=str,
                     help="tfrecord base folder for train/validation folders")
 parser.add_argument("--model_desc", default="CycleGAN", type=str, help="model name")
 parser.add_argument("--optimizer", default="adam", choices=['adam', 'sgd', 'sgdn', 'both'], type=str,
