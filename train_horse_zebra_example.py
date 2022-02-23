@@ -10,7 +10,7 @@ import os
 
 # GPU device
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = ""  # no GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = 'true'
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
@@ -168,13 +168,13 @@ def main():
 
     # Callbacks
     plotter = GANMonitor(test_dataset=test_horses)
-    checkpoint_filepath = r"C:\Bastien\Python\CycleGAN\output\cyclegan_checkpoints.{epoch:03d}"
+    checkpoint_filepath = r"/export/home/users/brigaud/Output/CycleGAN/horse2zebra/cyclegan_checkpoints.{epoch:03d}"
     model_checkpoint_callback = keras.callbacks.ModelCheckpoint(filepath=checkpoint_filepath, save_weights_only=True)
 
     # Here we will train the model for just one epoch as each epoch takes around
     # 7 minutes on a single P100 backed machine.
-    cycle_gan_model.fit(tf.data.Dataset.zip((train_horses, train_zebras)), epochs=10, steps_per_epoch=1,
-                        validation_steps=1, callbacks=[plotter, model_checkpoint_callback])
+    cycle_gan_model.fit(tf.data.Dataset.zip((train_horses, train_zebras)), epochs=10,
+                        callbacks=[model_checkpoint_callback])
 
 
 if __name__ == '__main__':
