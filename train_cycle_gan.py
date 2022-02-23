@@ -29,16 +29,16 @@ def str2bool(v):
 
 
 parser = argparse.ArgumentParser(description="Run training")
-parser.add_argument("--tb_path", default=r'C:\Data\DELPEL\results\Tensorboard_cGAN', type=str,
+parser.add_argument("--tb_path", default=r'/export/home/users/brigaud/Tensorboard/Tensorboard_cGAN', type=str,
                     help="tensorboard folder")
-parser.add_argument("--base_path", default=r'C:\Data\DELPEL\results\img_label_data\CBCT\unpaired_tfrecords', type=str,
+parser.add_argument("--base_path", default=r'/export/home/users/brigaud/unpaired_tfrecords', type=str,
                     help="tfrecord base folder for train/validation folders")
 parser.add_argument("--model_desc", default="CycleGAN", type=str, help="model name")
 parser.add_argument("--optimizer", default="adam", choices=['adam', 'sgd', 'sgdn', 'both'], type=str,
                     help="optimizer function")
 parser.add_argument("--normalization", default="instance", choices=["batch", "group", "instance"], type=str,
                     help="normalization function")
-parser.add_argument("--epoch", default=5, type=int, help="max number of epochs")
+parser.add_argument("--epoch", default=200, type=int, help="max number of epochs")
 parser.add_argument("--batch_size", default=1, type=int, help="batch size for training")
 parser.add_argument("--lr", default=0.0002, type=float, help="stable learning rate")
 parser.add_argument("--per_img_std", default=True, type=str2bool, help="bool to run per image centered normalization")
@@ -55,7 +55,7 @@ parser.add_argument("--rotation_angle_aug", default=0.0, type=float,
 parser.add_argument("--translation_aug", default=0.0, type=float,
                     help="translation value (x, y) to run translation augmentation")
 parser.add_argument("--img_size", default=512, type=int, help="row and col for input image size")
-parser.add_argument("--gpu", type=str, default="", help="select GPU id")
+parser.add_argument("--gpu", type=str, default="1", help="select GPU id")
 parser.add_argument("--iteration", default=1, type=int, help="iteration id to run multiple times the same hparams")
 args = parser.parse_args()
 
@@ -266,18 +266,11 @@ def main():
     print("Number of validation steps: {}, {}".format(len(validation_generator_X), len(validation_generator_Y)))
     print('This is the number of trainable weights:', len(cycle_gan_model.trainable_weights))
 
-    # cycle_gan_model.fit(tf.data.Dataset.zip((train_generator_X.data_set, train_generator_Y.data_set)), epochs=epoch,
-    #           steps_per_epoch=min(len(train_generator_X), len(train_generator_Y)),
-    #           validation_data=tf.data.Dataset.zip((validation_generator_X.data_set, validation_generator_Y.data_set)),
-    #           validation_steps=min(len(validation_generator_X), len(validation_generator_Y)),
-    #           callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1, max_queue_size=10)
     cycle_gan_model.fit(tf.data.Dataset.zip((train_generator_X.data_set, train_generator_Y.data_set)), epochs=epoch,
-                        steps_per_epoch=1,
-                        validation_data=tf.data.Dataset.zip(
-                            (validation_generator_X.data_set, validation_generator_Y.data_set)),
-                        validation_steps=1,
-                        callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1,
-                        max_queue_size=10)
+              steps_per_epoch=min(len(train_generator_X), len(train_generator_Y)),
+              validation_data=tf.data.Dataset.zip((validation_generator_X.data_set, validation_generator_Y.data_set)),
+              validation_steps=min(len(validation_generator_X), len(validation_generator_Y)),
+              callbacks=callbacks, verbose=1, use_multiprocessing=False, workers=1, max_queue_size=10)
 
 
 if __name__ == '__main__':
