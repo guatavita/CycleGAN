@@ -174,25 +174,25 @@ class CycleGAN(keras.Model):
 
     def run_cycle(self, real_x, real_y, training=False):
         # X to fake Y
-        fake_y = self.gen_G(real_x, training=False)
+        fake_y = self.gen_G(real_x, training=training)
         # Y to fake X -> y2x
-        fake_x = self.gen_F(real_y, training=False)
+        fake_x = self.gen_F(real_y, training=training)
 
         # Cycle (X to fake Y to fake X): x -> y -> x
-        cycled_x = self.gen_F(fake_y, training=False)
+        cycled_x = self.gen_F(fake_y, training=training)
         # Cycle (Y to fake X to fake Y) y -> x -> y
-        cycled_y = self.gen_G(fake_x, training=False)
+        cycled_y = self.gen_G(fake_x, training=training)
 
         # Identity mapping
-        same_x = self.gen_F(real_x, training=False)
-        same_y = self.gen_G(real_y, training=False)
+        same_x = self.gen_F(real_x, training=training)
+        same_y = self.gen_G(real_y, training=training)
 
         # Discriminator output
-        disc_real_x = self.disc_X(real_x, training=False)
-        disc_fake_x = self.disc_X(fake_x, training=False)
+        disc_real_x = self.disc_X(real_x, training=training)
+        disc_fake_x = self.disc_X(fake_x, training=training)
 
-        disc_real_y = self.disc_Y(real_y, training=False)
-        disc_fake_y = self.disc_Y(fake_y, training=False)
+        disc_real_y = self.disc_Y(real_y, training=training)
+        disc_fake_y = self.disc_Y(fake_y, training=training)
 
         # Generator adverserial loss
         gen_G_loss = self.generator_loss_fn(disc_fake_y)

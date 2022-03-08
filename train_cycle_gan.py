@@ -162,11 +162,11 @@ def main():
     img_size = args.img_size
     iteration = args.iteration
 
-    hparams, trial_id = None, '9999'
-    # hparams, trial_id = create_hparams_data(model_desc, tensorboard_path, batch_size, lr, epoch, loss_function,
-    #                                         optimizer, normalization, max_noise, scale_aug, crop_aug, lr_flip_aug,
-    #                                         ud_flip_aug, rotation_angle_aug, img_size, translation_aug, per_img_std,
-    #                                         contrast_aug, iteration)
+    # hparams, trial_id = None, '9999'
+    hparams, trial_id = create_hparams_data(model_desc, tensorboard_path, batch_size, lr, epoch, loss_function,
+                                            optimizer, normalization, max_noise, scale_aug, crop_aug, lr_flip_aug,
+                                            ud_flip_aug, rotation_angle_aug, img_size, translation_aug, per_img_std,
+                                            contrast_aug, iteration)
 
     debug = False
     if debug:
