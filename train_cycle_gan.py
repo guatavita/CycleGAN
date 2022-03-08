@@ -88,7 +88,7 @@ from return_generator import *
 from Callback.cycle_images_callback import Add_Cycle_Images
 
 
-def create_hparams_data(model_desc, tensorboard_path, batch_size, lr, epoch, loss_function, optimizer, normalization,
+def create_hparams_data(model_desc, tensorboard_path, batch_size, lr, epoch, optimizer, normalization,
                         max_noise, scale_aug, crop_aug, lr_flip_aug, ud_flip_aug, rotation_angle_aug, img_size,
                         translation_aug, per_img_std, contrast_aug, iteration):
     if not os.path.exists(tensorboard_path):
@@ -100,7 +100,6 @@ def create_hparams_data(model_desc, tensorboard_path, batch_size, lr, epoch, los
                 'batch_size': batch_size,
                 'lr': lr,
                 'epoch': epoch,
-                'loss_function': loss_function,
                 'optimizer': optimizer,
                 'normalization': normalization,
                 'max_noise': max_noise,
@@ -163,10 +162,10 @@ def main():
     iteration = args.iteration
 
     # hparams, trial_id = None, '9999'
-    hparams, trial_id = create_hparams_data(model_desc, tensorboard_path, batch_size, lr, epoch, loss_function,
-                                            optimizer, normalization, max_noise, scale_aug, crop_aug, lr_flip_aug,
-                                            ud_flip_aug, rotation_angle_aug, img_size, translation_aug, per_img_std,
-                                            contrast_aug, iteration)
+    hparams, trial_id = create_hparams_data(model_desc, tensorboard_path, batch_size, lr, epoch, optimizer,
+                                            normalization, max_noise, scale_aug, crop_aug, lr_flip_aug, ud_flip_aug,
+                                            rotation_angle_aug, img_size, translation_aug, per_img_std, contrast_aug,
+                                            iteration)
 
     debug = False
     if debug:
