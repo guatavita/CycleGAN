@@ -29,9 +29,9 @@ def str2bool(v):
 
 
 parser = argparse.ArgumentParser(description="Run training")
-parser.add_argument("--tb_path", default=r'/export/home/users/brigaud/Tensorboard/Tensorboard_cGAN', type=str,
+parser.add_argument("--tb_path", default=r'/workspace/Tensorboard/Tensorboard_cGAN', type=str,
                     help="tensorboard folder")
-parser.add_argument("--base_path", default=r'/export/home/users/brigaud/Data/unpaired_tfrecords', type=str,
+parser.add_argument("--base_path", default=r'/workspace/Data/unpaired_tfrecords', type=str,
                     help="tfrecord base folder for train/validation folders")
 parser.add_argument("--model_desc", default="CycleGAN", type=str, help="model name")
 parser.add_argument("--optimizer", default="adam", choices=['adam', 'sgd', 'sgdn', 'both'], type=str,
@@ -56,7 +56,7 @@ parser.add_argument("--translation_aug", default=0.0, type=float,
                     help="translation value (x, y) to run translation augmentation")
 parser.add_argument("--img_size", default=512, type=int, help="row and col for input image size")
 parser.add_argument("--gpu", type=str, default="1", help="select GPU id")
-parser.add_argument("--iteration", default=1, type=int, help="iteration id to run multiple times the same hparams")
+parser.add_argument("--iteration", default=2, type=int, help="iteration id to run multiple times the same hparams")
 args = parser.parse_args()
 
 # GPU device
