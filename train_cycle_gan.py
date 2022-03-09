@@ -56,7 +56,7 @@ parser.add_argument("--translation_aug", default=0.0, type=float,
                     help="translation value (x, y) to run translation augmentation")
 parser.add_argument("--img_size", default=512, type=int, help="row and col for input image size")
 parser.add_argument("--gpu", type=str, default="1", help="select GPU id")
-parser.add_argument("--iteration", default=2, type=int, help="iteration id to run multiple times the same hparams")
+parser.add_argument("--iteration", default=3, type=int, help="iteration id to run multiple times the same hparams")
 args = parser.parse_args()
 
 # GPU device
